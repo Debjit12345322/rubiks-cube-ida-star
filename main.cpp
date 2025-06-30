@@ -1,43 +1,36 @@
-#include <iostream>
 #include "cube_state.hpp"
 #include "ida_star.hpp"
+#include "facelet_parser.hpp"
+#include <iostream>
+#include <string>
+#include <vector>
 
-CubeState getSolvedCube() {
-    CubeState cube;
-    for (int i = 0; i < 8; ++i) {
-        cube.corner_pos[i] = i;
-        cube.corner_orient[i] = 0;
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: ./rubik_solver <facelets.txt>" << std::endl;
+        return 1;
     }
-    for (int i = 0; i < 12; ++i) {
-        cube.edge_pos[i] = i;
-        cube.edge_orient[i] = 0;
-    }
-    return cube;
-}
 
-std::string moveToStr(Move m) {
-    const char* names[] = {
-        "U", "U2", "U'", "D", "D2", "D'", "L", "L2", "L'",
-        "R", "R2", "R'", "F", "F2", "F'", "B", "B2", "B'"
-    };
-    return names[m];
-}
+    std::string path = argv[1];
 
-int main() {
-    CubeState cube = getSolvedCube();
-    cube.applyMove(F);
-    cube.applyMove(R);
-    cube.applyMove(U);
+    try {
+        CubeState scrambled = parse_facelets(path);
+        std::vector<Move> solution;
 
-    std::vector<Move> solution;
-    if (ida_star(cube, solution)) {
-        std::cout << "Solution found in " << solution.size() << " moves:\n";
-        for (Move m : solution) {
-            std::cout << moveToStr(m) << " ";
+        if (ida_star(scrambled, solution)) {
+            std::cout << "Solution found in " << solution.size() << " moves:\n";
+            for (const auto& move : solution) {
+                std::cout << move_to_string(move) << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            std::cout << "No solution found.\n";
         }
-        std::cout << "\n";
-    } else {
-        std::cout << "No solution found.\n";
+
+    } catch (const std::exception& ex) {
+        std::cerr << "Error: " << ex.what() << std::endl;
+        return 1;
     }
+
     return 0;
 }
