@@ -1,15 +1,13 @@
-// move.cpp
-#include "move.hpp"
+#pragma once
 #include <string>
 
-std::string move_to_string(Move move) {
-    static const char* move_names[] = {
-        "U", "U'", "U2",
-        "D", "D'", "D2",
-        "L", "L'", "L2",
-        "R", "R'", "R2",
-        "F", "F'", "F2",
-        "B", "B'", "B2"
-    };
-    return move_names[static_cast<int>(move)];
-}
+enum class Move {
+    U, U2, U_PRIME,
+    D, D2, D_PRIME,
+    F, F2, F_PRIME,
+    B, B2, B_PRIME,
+    L, L2, L_PRIME,
+    R, R2, R_PRIME
+};
+
+std::string move_to_string(Move m);
