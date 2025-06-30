@@ -1,43 +1,37 @@
 #include "ida_star.hpp"
 #include "heuristic.hpp"
-#include <climits>
+#include <limits>
 
-int search(CubeState& node, int g, int threshold, std::vector<Move>& path, Move last_move) {
-    int f = g + heuristic(node);
-    if (f > threshold) return f;
-    if (node.isSolved()) return -1;
+namespace {
+    bool dfs(CubeState& state, int g, int bound, int& next_bound, std::vector<Move>& path) {
+        int f = g + heuristic(state);
+        if (f > bound) {
+            next_bound = std::min(next_bound, f);
+            return false;
+        }
 
-    int min_next_f = INT_MAX;
+        if (state.is_solved()) return true;
 
-    for (int m = 0; m < NUM_MOVES; ++m) {
-        Move move = static_cast<Move>(m);
+        for (int i = 0; i < 18; ++i) {
+            Move m = static_cast<Move>(i);
+            CubeState next = state;
+            next.apply_move(m);
+            path.push_back(m);
+            if (dfs(next, g + 1, bound, next_bound, path)) return true;
+            path.pop_back();
+        }
 
-        if ((g > 0) && (move / 3 == last_move / 3) && ((move + last_move) % 3 == 2))
-            continue;
-
-        CubeState next = node;
-        next.applyMove(move);
-        path.push_back(move);
-        int result = search(next, g + 1, threshold, path, move);
-        if (result == -1) return -1;
-        if (result < min_next_f) min_next_f = result;
-        path.pop_back();
+        return false;
     }
-
-    return min_next_f;
 }
 
 bool ida_star(CubeState start, std::vector<Move>& solution) {
-    int threshold = heuristic(start);
-
+    int bound = heuristic(start);
     while (true) {
-        std::vector<Move> path;
-        int result = search(start, 0, threshold, path, static_cast<Move>(-1));
-        if (result == -1) {
-            solution = path;
-            return true;
-        }
-        if (result == INT_MAX) return false;
-        threshold = result;
+        int next_bound = std::numeric_limits<int>::max();
+        if (dfs(start, 0, bound, next_bound, solution)) return true;
+        if (next_bound == std::numeric_limits<int>::max()) return false;
+        bound = next_bound;
     }
 }
+
